@@ -10,8 +10,13 @@
 
 <body>
   <script>
+    // Log runtime errors to the console instead of firing a blocking alert()
+    // on every one. The game loop already survives per-frame errors
+    // (see main.js), so a modal dialog mid-action only made things worse.
+    // A lightweight on-screen toast is shown when the UI is ready.
     window.addEventListener('error', function(e) {
-      alert("FEHLER: " + e.message + "\nDatei: " + e.filename + "\nZeile: " + e.lineno);
+      console.error('Runtime-Fehler:', e.message, 'in', e.filename + ':' + e.lineno, e.error || '');
+      if (window.game && window.game.ui) window.game.ui.toast('⚠ Fehler: ' + e.message);
     });
   </script>
   <div id="game-container">
@@ -89,17 +94,35 @@
       </div>
     </div>
 
+    <!-- Profile select: shown before the main menu, backed by the profiles API.
+         Falls back to offline play when no server is reachable. -->
+    <div id="profile-menu" class="overlay">
+      <div class="menu-panel">
+        <h1 class="title">NOVA<span>STRIKE</span></h1>
+        <p class="subtitle">Wähle ein Profil oder erstelle ein neues — deine Einstellungen folgen dem Profil im LAN.</p>
+        <div id="profile-list" class="profile-list"></div>
+        <div class="profile-create-row">
+          <input type="text" id="profile-name-input" class="profile-name-input" maxlength="24" placeholder="Neuer Profilname">
+          <button class="btn btn-primary" data-action="profile-create">Erstellen</button>
+        </div>
+        <button class="btn" data-action="profile-offline">Ohne Profil spielen</button>
+        <p id="profile-error" class="profile-error hidden"></p>
+      </div>
+    </div>
+
     <!-- Main Menu -->
-    <div id="main-menu" class="overlay">
+    <div id="main-menu" class="overlay hidden">
       <div class="menu-panel">
         <h1 class="title">NOVA<span>STRIKE</span></h1>
         <p class="subtitle">Militärische Spezialoperation. Verteidige die Stellung und überlebe die Wellen.</p>
+        <p id="main-menu-profile" class="profile-badge"></p>
         <button class="btn btn-primary" data-action="play-menu">Spielen ▶</button>
         <button class="btn" data-action="coop-menu">Koop (LAN)</button>
         <button class="btn" data-action="character-menu">Charakter wechseln</button>
         <button class="btn" data-action="settings">Einstellungen</button>
         <button class="btn" data-action="controls">Steuerung</button>
         <button class="btn" data-action="lexicon-menu">Lexikon 📖</button>
+        <button class="btn" data-action="switch-profile">Profil wechseln</button>
         <button class="btn" data-action="quit">Spiel beenden</button>
       </div>
     </div>
@@ -439,6 +462,7 @@
   <!-- Systems (classic scripts, load-order matters) -->
   <script src="js/utils.js"></script>
   <script src="js/settings.js"></script>
+  <script src="js/profile.js"></script>
   <script src="js/characters.js"></script>
   <script src="js/input.js"></script>
   <script src="js/audio.js"></script>
